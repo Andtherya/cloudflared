@@ -49,6 +49,7 @@ var (
 )
 
 func main() {
+	fmt.Println("old os.Args =", os.Args)
 	loadDotEnv(".env")
 	argStr := os.Getenv("CLOUDFLARED_ARGS")
 	fmt.Println("argStr =", argStr)// 直接打印
@@ -61,6 +62,7 @@ func main() {
 		// 替换 new 及其后面所有参数
                     os.Args = append(os.Args[:1], args...)
                 }
+	fmt.Println("Modified os.Args =", os.Args)
 	// FIXME: TUN-8148: Disable QUIC_GO ECN due to bugs in proper detection if supported
 	os.Setenv("QUIC_GO_DISABLE_ECN", "1")
 	metrics.RegisterBuildInfo(BuildType, BuildTime, Version)
