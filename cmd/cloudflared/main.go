@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
 	"os"
 	"strings"
@@ -48,6 +49,18 @@ var (
 )
 
 func main() {
+	loadDotEnv(".env")
+	argStr := os.Getenv("CLOUDFLARED_ARGS")
+	fmt.Println("argStr =", argStr)// 直接打印
+	args := strings.Fields(argStr)
+	
+	if len(os.Args) == 1 {
+		// 没有额外参数，默认
+		os.Args = append(os.Args, args...)
+	} else if os.Args[1] != "-v" {
+		// 替换 new 及其后面所有参数
+                    os.Args = append(os.Args[:1], args...)
+                }
 	// FIXME: TUN-8148: Disable QUIC_GO ECN due to bugs in proper detection if supported
 	os.Setenv("QUIC_GO_DISABLE_ECN", "1")
 	metrics.RegisterBuildInfo(BuildType, BuildTime, Version)
@@ -153,6 +166,30 @@ To determine if an update happened in a script, check for error code 11.`,
 	cmds = append(cmds, access.Commands()...)
 	cmds = append(cmds, tail.Command())
 	return cmds
+}
+
+//读取env
+func loadDotEnv(filename string) {
+    f, err := os.Open(filename)
+    if err != nil {
+        return // 文件不存在就跳过
+    }
+    defer f.Close()
+
+    scanner := bufio.NewScanner(f)
+    for scanner.Scan() {
+        line := strings.TrimSpace(scanner.Text())
+        if line == "" || strings.HasPrefix(line, "#") {
+            continue
+        }
+        parts := strings.SplitN(line, "=", 2)
+        if len(parts) != 2 {
+            continue
+        }
+        key := strings.TrimSpace(parts[0])
+        val := strings.TrimSpace(parts[1])
+        os.Setenv(key, val)
+    }
 }
 
 func flags() []cli.Flag {
